@@ -1,9 +1,10 @@
 import numpy as np
-import cv2
 
 '''
-@param img0: grayscale (2D) image, ** assuming it's a np array **
-@param h:    matrix storing  a convolution filter
+@param img0:    2D numpy array
+                Grayscale image
+@param h:       2D numpy array
+                Matrix storing a convolution filter
 '''
 def myImageFilter(img0, h):
     imageH, imageW = np.shape(img0)
