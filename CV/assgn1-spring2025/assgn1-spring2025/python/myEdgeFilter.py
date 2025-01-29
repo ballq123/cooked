@@ -35,7 +35,7 @@ def myEdgeFilter(img0, sigma):
     gradAngleRadians = np.arctan2(imgY, imgX)
     gradAngle = ((gradAngleRadians * 180) / np.pi) % 180
 
-    img1 = nMaxSuppression(gradMag, gradAngle)
+    img1 = nMaxSuppression(smoothed, gradMag, gradAngle)
     return img1, imgX, imgY
 
 '''
@@ -44,9 +44,40 @@ def myEdgeFilter(img0, sigma):
 @param gradAngle:   2D numpy array
                     Gradient angle matrix of image
 '''
-def nMaxSuppression(gradMag, gradAngle):
+def nMaxSuppression(smoothed, gradMag, gradAngle):
     gradH, gradW = gradMag.shape
     shaved = np.zeros_like(gradMag)
+
+    zeroDeg = np.array([
+        [[0, 0, 0],
+         [1, 1, 1],
+         [0, 0, 0]]
+    ])
+    fourFiveDeg = np.array([
+        [[0, 0, 1],
+         [0, 1, 0],
+         [1, 0, 0]],
+    ])
+    ninetyDeg = np.array([
+        [[0, 1, 0],
+         [0, 1, 0],
+         [0, 1, 0]],
+    ])
+    oneThreeFiveDeg = np.array([
+        [[1, 0, 0],
+         [0, 1, 0],
+         [0, 0, 1]],
+    ])
+
+    dilateZero = dilate(smoothed, zeroDeg)
+    dilateFour = dilate(smoothed, fourFiveDeg)
+    dilateNine = dilate(smoothed, ninetyDeg)
+    dilateOne = dilate(smoothed, oneThreeFiveDeg)
+
+
+
+
+    '''
 
     # skip bordering pixels bc they don't have all necessary neighbors 😞  
     # DO THIS, OR SHOULD WE PAD THE IMAGE & ALLOW FOR BORDER INCLUSION?  
@@ -78,6 +109,7 @@ def nMaxSuppression(gradMag, gradAngle):
                 shaved[i, j] = curMag
             else:
                 shaved[i, j] = 0
+    '''
     return shaved
 
 def showRes():
