@@ -1,7 +1,7 @@
 import cv2
 import math
 import numpy as np
-from scipy import signal    # For signal.gaussian function
+from scipy import signal    
 from cv2 import dilate
 from matplotlib import pyplot as plt
 from myImageFilter import myImageFilter
