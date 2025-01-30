@@ -13,11 +13,10 @@ from myImageFilter import myImageFilter
                 StdDev of Gaussian smoothing kernel to be used before edge detection  
 '''
 def myEdgeFilter(img0, sigma):
-    hsize = 2 * math.ceil(3 * sigma) + 1
+    hsize = 2 * np.ceil(3 * sigma) + 1
     # mighttt have to do some weird stuff with this kernel's shape ngl
     kernel = signal.windows.gaussian(hsize, sigma)
     kernel = np.outer(kernel, kernel)
-    # normalize dat bihh (TAKE THIS OUT LATER)
     kernel = (1 / np.sum(kernel)) * kernel
 
     # print("kernel shape after: ", kernel.shape)
@@ -45,9 +44,6 @@ def myEdgeFilter(img0, sigma):
                     Gradient angle matrix of image
 '''
 def nMaxSuppression(smoothed, gradMag, gradAngle):
-    rows, cols = smoothed.shape
-    shaved = np.zeros_like(smoothed)
-
     zeroDeg = np.array([
         [0, 0, 0],
         [1, 1, 1],
@@ -69,17 +65,8 @@ def nMaxSuppression(smoothed, gradMag, gradAngle):
         [1, 0, 0]
     ], dtype=np.uint8)
 
-    gradMag = gradMag.astype(np.float32)  # Ensure float32 for dilation
-    gradMag = np.expand_dims(gradMag, axis=-1)
-
-    print("gradMag shape after conversion:", gradMag.shape)
-    print("Kernel shape:", zeroDeg.shape)
-
-
-    # mod 4 wraps 180 degrees back to 0
-    # use .astype(int) because using int() on an array throws errors :(
-    nearestAngle = np.round(gradAngle / float(45))
-    index = (nearestAngle.astype(int)) % 4
+    # print("gradMag shape:", gradMag.shape)
+    # print("Kernel shape:", zeroDeg.shape)
 
     dilateZero = dilate(gradMag, zeroDeg)
     dilateFour = dilate(gradMag, fourFiveDeg)
@@ -87,14 +74,27 @@ def nMaxSuppression(smoothed, gradMag, gradAngle):
     dilateOne = dilate(gradMag, oneThreeFiveDeg)
     dilations = [dilateZero, dilateFour, dilateNine, dilateOne]
 
-    for row in range(rows):
-        for col in range(cols):
-            # select corresponding dilation based on angle idx
-            current_dilation = dilations[index[row, col]]
-            if gradMag[row, col] == current_dilation[row, col]:
-                shaved[row, col] = gradMag[row, col]
+    # mod 4 wraps 180 degrees back to 0
+    # use .astype(int) because using int() on an array throws errors :(
+    nearestAngle = np.round(gradAngle / float(45))
+    index = (nearestAngle.astype(int)) % 4
+
+    # Visualize dilations (for debugging)
+    # for i, dilation in enumerate(dilations):
+    #     plt.imshow(dilation, cmap='gray')
+    #     plt.title(f'Dilation for angle {i * 45} degrees')
+    #     plt.show()
+
+    rows, cols = smoothed.shape
+    shaved = np.zeros_like(smoothed)
+    for r in range(rows):
+        for c in range(cols):
+            angle_index = index[r, c]
+            current_dilation = dilations[angle_index]
+            if gradMag[r, c] >= current_dilation[r, c]:
+                shaved[r, c] = gradMag[r, c]
             else:
-                shaved[row, col] = 0
+                shaved[r, c] = 0
     return shaved
 
 
