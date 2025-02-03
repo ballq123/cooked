@@ -7,7 +7,7 @@ from myImageFilter import myImageFilter
 
 
 '''
-@param img_threshold:   2D numpy array
+@param Im:   2D numpy array
                         Edge magnitude image, thresholded to ignore pixels 
                         with a low edge filter response
 @param rhoRes:          scalar
@@ -19,14 +19,29 @@ from myImageFilter import myImageFilter
 @return img_hough:      2D numpy array
                         Hough transform accumulator that contains the number of "votes"
                         for all the possible lines passing through the image
-@return rhoScale:       array of rho values over which myHoughTransform() generates the 
+@return rhoScale:       Array of rho values over which myHoughTransform() generates the 
                         Hough transform matrix img_hough
-@return thetaScale:     array of theta values over which myHoughTransform() generates the 
+@return thetaScale:     Array of theta values over which myHoughTransform() generates the 
                         Hough transform matrix img_hough
 '''
 def myHoughTransform(Im, rhoRes, thetaRes):
-    # YOUR CODE HERE
-    return
+    row, col = Im.shape
+    diagonal = np.sqrt((row ** 2) + (col ** 2))
+    maxRho = np.ceil(diagonal)
+
+    # possible rho vals = 0 -> maxRho+rhoRes, stepping by rhoRes
+    rhoScale = np.arange(0, maxRho + rhoRes, rhoRes)
+    # possible theta vals = 0 -> 2pi, stepping by thetaRes
+    thetaScale = np.arange(0, 2 * np.pi, thetaRes)
+    lenRho, lenTheta = len(rhoScale), len(thetaScale)
+    img_hough = np.zeros((lenRho, lenTheta))
+
+    for i in range(row):
+        for idx in enumerate(thetaScale):
+
+
+    res = [img_hough, rhoScale, thetaScale]
+    return res
 
 
 def showRes():
