@@ -100,7 +100,16 @@ def nMaxSuppression(smoothed, gradMag, gradAngle):
 
 def showRes():
     sigma = 2
-    img = cv2.imread('img01.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img01.jpg', cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread('img02.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img03.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img04.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img05.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img06.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img07.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img08.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img09.jpg', cv2.IMREAD_GRAYSCALE)
+    # img = cv2.imread('img10.jpg', cv2.IMREAD_GRAYSCALE)
     assert img is not None, "file DNE? we can't read it"
     edges_custom, _, _ = myEdgeFilter(img, sigma)
     plt.imshow(edges_custom, cmap='gray')
