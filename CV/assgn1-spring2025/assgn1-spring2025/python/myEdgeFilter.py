@@ -10,7 +10,10 @@ from myImageFilter import myImageFilter
 @param img0:    2D numpy array
                 Grayscale (2D) image 
 @param sigma:   scalar
-                StdDev of Gaussian smoothing kernel to be used before edge detection  
+                StdDev of Gaussian smoothing kernel to be used before edge detection 
+
+@return img1:   2D numpy array
+                Edge magnitude image
 '''
 def myEdgeFilter(img0, sigma):
     hsize = 2 * np.ceil(3 * sigma) + 1
@@ -65,9 +68,6 @@ def nMaxSuppression(smoothed, gradMag, gradAngle):
         [1, 0, 0]
     ], dtype=np.uint8)
 
-    # print("gradMag shape:", gradMag.shape)
-    # print("Kernel shape:", zeroDeg.shape)
-
     dilateZero = dilate(gradMag, zeroDeg)
     dilateFour = dilate(gradMag, fourFiveDeg)
     dilateNine = dilate(gradMag, ninetyDeg)
@@ -78,12 +78,6 @@ def nMaxSuppression(smoothed, gradMag, gradAngle):
     # use .astype(int) because using int() on an array throws errors :(
     nearestAngle = np.round(gradAngle / float(45))
     index = (nearestAngle.astype(int)) % 4
-
-    # Visualize dilations (for debugging)
-    # for i, dilation in enumerate(dilations):
-    #     plt.imshow(dilation, cmap='gray')
-    #     plt.title(f'Dilation for angle {i * 45} degrees')
-    #     plt.show()
 
     rows, cols = smoothed.shape
     shaved = np.zeros_like(smoothed)
@@ -100,16 +94,7 @@ def nMaxSuppression(smoothed, gradMag, gradAngle):
 
 def showRes():
     sigma = 2
-    # img = cv2.imread('img01.jpg', cv2.IMREAD_GRAYSCALE)
-    img = cv2.imread('img02.jpg', cv2.IMREAD_GRAYSCALE)
-    # img = cv2.imread('img03.jpg', cv2.IMREAD_GRAYSCALE)
-    # img = cv2.imread('img04.jpg', cv2.IMREAD_GRAYSCALE)
-    # img = cv2.imread('img05.jpg', cv2.IMREAD_GRAYSCALE)
-    # img = cv2.imread('img06.jpg', cv2.IMREAD_GRAYSCALE)
-    # img = cv2.imread('img07.jpg', cv2.IMREAD_GRAYSCALE)
-    # img = cv2.imread('img08.jpg', cv2.IMREAD_GRAYSCALE)
-    # img = cv2.imread('img09.jpg', cv2.IMREAD_GRAYSCALE)
-    # img = cv2.imread('img10.jpg', cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread('img01.jpg', cv2.IMREAD_GRAYSCALE)
     assert img is not None, "file DNE? we can't read it"
     edges_custom = myEdgeFilter(img, sigma)
     plt.imshow(edges_custom, cmap='gray')
