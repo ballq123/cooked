@@ -34,7 +34,7 @@ def myEdgeFilter(img0, sigma):
     gradMag = np.sqrt((imgX ** 2) + (imgY ** 2))
 
     img1 = nMaxSuppression(smoothed, gradMag, gradAngle)
-    return img1, imgX, imgY
+    return img1
     
 
 '''
@@ -111,10 +111,10 @@ def showRes():
     # img = cv2.imread('img09.jpg', cv2.IMREAD_GRAYSCALE)
     # img = cv2.imread('img10.jpg', cv2.IMREAD_GRAYSCALE)
     assert img is not None, "file DNE? we can't read it"
-    edges_custom, _, _ = myEdgeFilter(img, sigma)
+    edges_custom = myEdgeFilter(img, sigma)
     plt.imshow(edges_custom, cmap='gray')
     plt.title('My Edge Filter')
     plt.axis('off')
     plt.show()
 
-showRes()
+# showRes()

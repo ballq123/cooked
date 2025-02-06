@@ -1,13 +1,14 @@
+import cv2 
 import math
-import cv2
 import numpy as np
 from scipy import signal  
 from matplotlib import pyplot as plt
 from myImageFilter import myImageFilter
+from myEdgeFilter import myEdgeFilter
 
 
 '''
-@param Im:   2D numpy array
+@param Im:              2D numpy array
                         Edge magnitude image, thresholded to ignore pixels 
                         with a low edge filter response
 @param rhoRes:          scalar
@@ -25,8 +26,9 @@ from myImageFilter import myImageFilter
                         Hough transform matrix img_hough
 '''
 def myHoughTransform(Im, rhoRes, thetaRes):
-    row, col = Im.shape
-    diagonal = np.sqrt((row ** 2) + (col ** 2))
+    rows, cols = Im.shape
+
+    diagonal = np.sqrt((rows ** 2) + (cols ** 2))
     maxRho = np.ceil(diagonal)
 
     # possible rho vals = 0 -> maxRho+rhoRes, stepping by rhoRes
@@ -34,21 +36,37 @@ def myHoughTransform(Im, rhoRes, thetaRes):
     # possible theta vals = 0 -> 2pi, stepping by thetaRes
     thetaScale = np.arange(0, 2 * np.pi, thetaRes)
     lenRho, lenTheta = len(rhoScale), len(thetaScale)
+
     img_hough = np.zeros((lenRho, lenTheta))
-
-    for i in range(row):
-        for idx in enumerate(thetaScale):
-
-
+    for row in range(rows):
+        for col in range(cols):
+            # apparently this is faster than doing Im[row][col] in numpy
+            if Im[row, col] == 1:
+                for j, theta in enumerate(thetaScale):
+                    rho = (col * np.cos(theta)) + (row * np.sin(theta))
+                    # theta vals => negative rho vals are invalid
+                    if rho >= 0:
+                        i = int(np.round(rho / rhoRes))
+                        img_hough[i, j] += 1
     res = [img_hough, rhoScale, thetaScale]
     return res
 
 
 def showRes():
-    sigma = 2
+    sigma     = 2
+    threshold = 0.03
+    rhoRes    = 2
+    thetaRes  = np.pi / 90
+    
     img = cv2.imread('img01.jpg', cv2.IMREAD_GRAYSCALE)
+    if (img.ndim == 3):
+        img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    img = np.float32(img) / 255
+
+    img_edge = myEdgeFilter(img, sigma)
+    img_threshold = np.float32(img_edge > threshold)
     assert img is not None, "file DNE? we can't read it"
-    img_hough, rhoScale, thetaScale = myHoughTransform(img, sigma)
+    img_hough, rhoScale, thetaScale = myHoughTransform(img_threshold, rhoRes, thetaRes)
     plt.imshow(img_hough, cmap='gray')
     plt.title('My Edge Filter')
     plt.axis('off')
