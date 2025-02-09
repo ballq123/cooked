@@ -39,11 +39,9 @@ def myHoughLines(H, nLines):
 def nonMaxSuppression(H):
     # need to consider all neighbors of a pixel in this case, not just those
     # lying along the gradient direction
-    kernel = np.array([[1, 1, 1, 1, 1],
-                       [1, 1, 1, 1, 1],
-                       [1, 1, 1, 1, 1],
-                       [1, 1, 1, 1, 1],
-                       [1, 1, 1, 1, 1]])
+    kernel = np.array([[1, 1, 1],
+                       [1, 1, 1],
+                       [1, 1, 1]])
     res = cv2.dilate(H, kernel)
     return res
 
@@ -96,4 +94,4 @@ def showRes():
     plt.axis('off')
     plt.show()
 
-showRes()
+# showRes()

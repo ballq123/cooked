@@ -41,16 +41,16 @@ for file in os.listdir(datadir):
                                 50, minLineLength = 20, maxLineGap = 5)
 
         # everything below here just saves the outputs to files
-        # fname = '%s/%s_01edge.png' % (resultsdir, file)
-        # cv2.imwrite(fname, 255 * np.sqrt(img_edge / img_edge.max()))
+        fname = '%s/%s_01edge.png' % (resultsdir, file)
+        cv2.imwrite(fname, 255 * np.sqrt(img_edge / img_edge.max()))
         
-        # fname = '%s/%s_02threshold.png' % (resultsdir, file)
-        # cv2.imwrite(fname, 255 * img_threshold)
+        fname = '%s/%s_02threshold.png' % (resultsdir, file)
+        cv2.imwrite(fname, 255 * img_threshold)
         
-        # fname = '%s/%s_03hough.png' % (resultsdir, file)
-        # cv2.imwrite(fname, 255 * img_hough / img_hough.max())
+        fname = '%s/%s_03hough.png' % (resultsdir, file)
+        cv2.imwrite(fname, 255 * img_hough / img_hough.max())
         
-        # fname = '%s/%s_04lines.png' % (resultsdir, file)
+        fname = '%s/%s_04lines.png' % (resultsdir, file)
         img_lines = np.dstack([img,img,img])
 
         # display line results from myHoughLines function in red
@@ -75,5 +75,5 @@ for file in os.listdir(datadir):
             cv2.line(img_lines, (coords[0], coords[1]), (coords[2], coords[3]), \
                      (0, 255, 0), 1)
 
-        # cv2.imwrite(fname, 255 * img_lines)
+        cv2.imwrite(fname, 255 * img_lines)
 
