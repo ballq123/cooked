@@ -25,6 +25,7 @@ def myImageFilter(img0, h):
             img1 += (subsection * hSubSection)
     return img1
 
+
 def showRes():
     sigma     = 2
     threshold = 0.03
@@ -52,4 +53,4 @@ def showRes():
     plt.axis('off')
     plt.show()
 
-showRes()
+# showRes()
