@@ -8,6 +8,7 @@ from myHoughTransform import myHoughTransform
 
 datadir    = '../data'      # the directory containing the images
 resultsdir = '../results'   # the directory for dumping results
+# resultsdir = '../resultssigma0.5'   # directory for dumping test results
 
 # parameters
 sigma     = 2

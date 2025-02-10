@@ -17,12 +17,10 @@ from myImageFilter import myImageFilter
 '''
 def myEdgeFilter(img0, sigma):
     hsize = 2 * np.ceil(3 * sigma) + 1
-    # mighttt have to do some weird stuff with this kernel's shape ngl
     kernel = signal.windows.gaussian(hsize, sigma)
     kernel = np.outer(kernel, kernel)
     kernel = (1 / np.sum(kernel)) * kernel
 
-    # print("kernel shape after: ", kernel.shape)
     smoothed = myImageFilter(img0, kernel)
     xOrientedSobel = np.array([[1., 0., -1.]])
     yOrientedSobel = np.array([[1.],

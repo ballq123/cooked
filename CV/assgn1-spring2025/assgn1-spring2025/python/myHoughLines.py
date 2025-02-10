@@ -37,7 +37,7 @@ def myHoughLines(H, nLines):
             Image to be suppressed
 '''
 def nonMaxSuppression(H):
-    # need to consider all neighbors of a pixel in this case, not just those
+    # need to consider ALL neighbors of a pixel in this case, not just those
     # lying along the gradient direction
     kernel = np.array([[1, 1, 1],
                        [1, 1, 1],
