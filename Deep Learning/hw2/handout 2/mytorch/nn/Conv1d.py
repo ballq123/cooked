@@ -118,5 +118,6 @@ class Conv1d():
         dLdA = self.conv1d_stride1.backward(dLdZDown)
 
         # Unpad the gradient
-        dLdA = dLdA[:, :, self.pad:-self.pad]
+        if self.pad > 0:
+            dLdA = dLdA[:, :, self.pad:-self.pad]
         return dLdA

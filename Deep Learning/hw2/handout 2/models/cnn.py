@@ -104,7 +104,6 @@ class CNN(object):
         for i in range(L):
             layer = self.layers[i]
             A = layer.forward(A)
-            print(f"Forward {layer.__class__.__name__} output shape: {A.shape}")  # Debugging
 
         # Save output (necessary for error and loss)
         self.Z = A
@@ -129,8 +128,6 @@ class CNN(object):
 
         L = len(self.layers)
         for layer in reversed(self.layers):
-            print(f"Backward {layer.__class__.__name__} input shape: {grad.shape}")  # Debugging
-
             grad = layer.backward(grad)
 
         return grad
