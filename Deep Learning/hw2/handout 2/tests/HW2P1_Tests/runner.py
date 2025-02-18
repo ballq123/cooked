@@ -1513,6 +1513,7 @@ def test_distributed_scanning_mlp():
 
     try:
         assert(isinstance(result, type(expected_result)))
+        print("mine:", result.shape, "expected:", expected_result.shape)
         assert(result.shape == expected_result.shape)
         assert(np.allclose(result, expected_result))
         print("Distributed Scanning MLP:" + "PASS")
