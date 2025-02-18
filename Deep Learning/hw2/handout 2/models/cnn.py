@@ -63,9 +63,30 @@ class CNN(object):
         # self.linear_layer         (Linear)      = Linear(???)
         # <---------------------
 
-        self.convolutional_layers = None
-        self.flatten = None
-        self.linear_layer = None
+        self.conv1 = Conv1d(in_channels=24, out_channels=56, kernel_size=5, stride=1)
+        self.conv2 = Conv1d(in_channels=56, out_channels=28, kernel_size=6, stride=2)
+        self.conv3 = Conv1d(in_channels=28, out_channels=14, kernel_size=2, stride=2)
+
+        self.flatten = Flatten()
+        in_features = 420
+        out_features = 10
+        self.linear_layer = Linear(in_features, out_features)
+
+        self.convolutional_layers = [
+            self.conv1,
+            self.conv2,
+            self.conv3,
+        ]
+        self.layers = [
+            self.conv1,
+            Tanh(),
+            self.conv2,
+            ReLU(),
+            self.conv3,
+            Sigmoid(),
+            self.flatten,
+            self.linear_layer
+        ]
 
     def forward(self, A):
         """
@@ -78,6 +99,12 @@ class CNN(object):
         # Your code goes here -->
         # Iterate through each layer
         # <---------------------
+        
+        L = len(self.layers)
+        for i in range(L):
+            layer = self.layers[i]
+            A = layer.forward(A)
+            print(f"Forward {layer.__class__.__name__} output shape: {A.shape}")  # Debugging
 
         # Save output (necessary for error and loss)
         self.Z = A
@@ -99,6 +126,12 @@ class CNN(object):
         # Your code goes here -->
         # Iterate through each layer in reverse order
         # <---------------------
+
+        L = len(self.layers)
+        for layer in reversed(self.layers):
+            print(f"Backward {layer.__class__.__name__} input shape: {grad.shape}")  # Debugging
+
+            grad = layer.backward(grad)
 
         return grad
 
