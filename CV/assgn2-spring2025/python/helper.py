@@ -19,6 +19,7 @@ def plotMatches(im1,im2,matches,locs1,locs2):
 	im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
 	plt.axis('off')
 	skimage.feature.plot_matches(ax, im1, im2, locs1, locs2, matches, matches_color='r', only_matches=True)
+	plt.savefig("../results/harryP.png", bbox_inches='tight', pad_inches=0)
 	plt.show()
 	return
 
