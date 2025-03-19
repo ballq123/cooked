@@ -7,6 +7,7 @@ Submission Functions
 from helper import *
 import numpy as np
 import scipy
+from scipy import signal
 import cv2
 
 
@@ -21,24 +22,29 @@ def eight_point(pts1, pts2, M):
     T = np.array([[1/M, 0], [0, 1/M]])
     T0 = np.array([[1/M, 0, 0], [0, 1/M, 0], [0, 0, 1]])
     
-    pts1_norm = pts1 @ T
-    pts2_norm = pts2 @ T
+    pts1Norm = pts1 @ T
+    pts2Norm = pts2 @ T
     
-    A = np.zeros((9, 9))
-    for i in range(9):
-        x1, y1 = pts1_norm[i]
-        x2, y2 = pts2_norm[i]
-        A[i] = [x1 * x2, x1 * y2, x1, y1 * x2, y1 * y2, y1, x2, y2, 1]
+    I = 9
+    A = np.zeros((I, I))
+    for i in range(I):
+        x1, y1 = pts1Norm[i]
+        x2, y2 = pts2Norm[i]
+        a0, a1 = x1 * x2, x1 * y2
+        a2, a3 = x1, y1 * x2
+        a4, a5 = y1 * y2, y1
+        a6, a7 = x2, y2
+        A[i] = [a0, a1, a2, a3, a4, a5, a6, a7, 1]
         
     _, _, V = np.linalg.svd(A)
     F = V[8].reshape(3, 3)
     U, S, Vt = np.linalg.svd(F)
     S[2] = 0
-    F_rank2 = np.diag(S)
-    F_unnorm = U @ F_rank2 @ Vt
-    F_unnorm = T0 @ F_unnorm @ T0
+    fRank2 = np.diag(S)
+    Funnorm = U @ fRank2 @ Vt
+    Funnorm = T0 @ Funnorm @ T0
     
-    F_refined = refineF(F_unnorm, pts1, pts2)
+    F_refined = refineF(Funnorm, pts1, pts2)
     
     return F_refined
 
@@ -51,43 +57,68 @@ Q3.1.2 Epipolar Correspondences
            pts1, points in image 1 (Nx2 matrix)
        [O] pts2, points in image 2 (Nx2 matrix)
 """
-def epipolar_correspondences(im1, im2, F, pts1):
+def epipolar_correspondences(im1, im2, F, pts1, windowSize=5):
+    halfW = (windowSize // 2)
+    minDist = windowSize ** 2
+    kGauss = signal.windows.gaussian(windowSize, 1, sym=True)
+    kGaussR = kGauss.reshape(1, windowSize)
+    k = scipy.signal.convolve2d(kGaussR, kGaussR.T)
+
     pts2 = np.zeros_like(pts1)
+    h1, _ = pts1.shape
+    pts1 = np.hstack((pts1, np.ones((h1, 1))))
+    im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY).astype(np.float32)
 
-    half_w = window_size // 2
-    im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY) if len(im1.shape) == 3 else im1
-    im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY) if len(im2.shape) == 3 else im2
+    for i, point in enumerate(pts1):
+        x, y = point[0], point[1]
+        top, bottom = (y - halfW), ((y - halfW) + 1)
+        l, r = (x - halfW), ((x - halfW) + 1)
+        patch1 = im1[int(top):int(bottom), int(l):int(r)]
+        w1 = patch1 * k
 
-    for i, (x1, y1) in enumerate(pts1):
-        # Compute epipolar line l' = F * [x1, y1, 1]
-        line = F @ np.array([x1, y1, 1])
-        a, b, c = line  # Line equation: ax + by + c = 0
+        # normalize epipolar line => div by euclidean dist eq
+        line = F @ point
+        a = line[0]
+        b = line[1]
+        c = line[2]
+        aSq = a ** 2
+        bSq = b ** 2
+        line = line / (np.sqrt(aSq + bSq)) 
 
-        # Generate candidate points along the epipolar line
-        y_candidates = np.arange(max(half_w, 0), min(im2.shape[0] - half_w, im2.shape[0]))
-        x_candidates = (- (b * y_candidates + c) / a).astype(int)
+        height, width = im2.shape
+        curP = width - 1
+        if (b == 0):
+            curP = im2.shape[0] - 1
 
-        # Filter valid candidates
-        valid_idx = (x_candidates >= half_w) & (x_candidates < im2.shape[1] - half_w)
-        y_candidates, x_candidates = y_candidates[valid_idx], x_candidates[valid_idx]
+        d = []
+        xVals, yVals = [], []
+        for val in range(curP):
+            xVal, yVal = val, -1 * (a * val + c) // b
+            if (b == 0):
+                xVal, yVal = -1 * ((b * val) + c) // a, val
+            if ((xVal < halfW) or ((width - halfW - 1) < xVal) 
+                or (yVal < halfW) or ((height - halfW - 1) < yVal)):
+                continue
 
-        # Extract patch around (x1, y1) in image 1
-        patch1 = im1[y1 - half_w:y1 + half_w + 1, x1 - half_w:x1 + half_w + 1]
+            top = (yVal - halfW)
+            bottom = (top + windowSize)
+            left = (xVal - halfW) 
+            r = (left + windowSize)
+            patch2 = im2[int(top):int(bottom), int(left):int(r)]
+            w2 = np.multiply(patch2, k)
 
-        best_match = None
-        min_dist = float("inf")
+            a1 = point[:2]
+            arr = np.array([xVal, yVal])
+            dist = np.linalg.norm(a1 - arr)
 
-        for x2, y2 in zip(x_candidates, y_candidates):
-            patch2 = im2[y2 - half_w:y2 + half_w + 1, x2 - half_w:x2 + half_w + 1]
-
-            # Compute Euclidean distance between patches
-            dist = np.sum((patch1 - patch2) ** 2)
-
-            if dist < min_dist:
-                min_dist = dist
-                best_match = (x2, y2)
-
-        pts2[i] = best_match
+            if dist < minDist:
+                d.append(np.linalg.norm(w1 - w2))
+                xVals.append(xVal)
+                yVals.append(yVal)
+        loc = np.argmin(d)
+        arr = np.array([int(xVals[loc]), int(yVals[loc])])
+        pts2[i] = arr
 
     return pts2
 
@@ -100,8 +131,9 @@ Q3.1.3 Essential Matrix
        [O] E, the essential matrix (3x3 matrix)
 """
 def essential_matrix(F, K1, K2):
-    # replace pass by your implementation
-    pass
+    k2T = K2.T
+    E = k2T @ F @ K1
+    return E
 
 
 """
@@ -113,8 +145,23 @@ Q3.1.4 Triangulation
        [O] pts3d, 3D points in space (Nx3 matrix)
 """
 def triangulate(P1, pts1, P2, pts2):
-    # replace pass by your implementation
-    pass
+    numPoints = pts1.shape[0]
+    # store homogeneous 3D points
+    pts3dHomogen = np.zeros((numPoints, 4))  
+    for i in range(numPoints):
+        x1, y1 = pts1[i]
+        x2, y2 = pts2[i]
+        A = np.vstack([
+            x1 * P1[2, :] - P1[0, :],
+            y1 * P1[2, :] - P1[1, :],
+            x2 * P2[2, :] - P2[0, :],
+            y2 * P2[2, :] - P2[1, :] 
+        ])
+
+        _, _, Vh = np.linalg.svd(A)
+        xHomogen = Vh[-1]  
+        pts3dHomogen[i] = xHomogen / xHomogen[-1]
+    return pts3dHomogen[:, :3]
 
 
 """
@@ -128,8 +175,28 @@ Q3.2.1 Image Rectification
            t1p t2p, rectified translation vectors (3x1 matrix)
 """
 def rectify_pair(K1, K2, R1, R2, t1, t2):
-    # replace pass by your implementation
-    pass
+    c1 = -np.linalg.inv(K1 @ R1) @ (K1 @ t1)
+    c2 = -np.linalg.inv(K2 @ R2) @ (K2 @ t2)
+    diff = c1 - c2
+
+    r1 = diff / np.linalg.norm(diff)
+    r1First = r1.T[0]
+    r2a = np.cross(R1[2,:].T, r1[:,0]) 
+    r2 = r2a[:,None]
+    r2First = r2.T[0]
+    r3a = np.cross(r1[:,0], r2[:,0])
+    r3 = r3a[:,None]
+    r3First = r3.T[0]
+
+    R = np.array([r1First, -r2First, r3First])
+    trans1 = -(R @ c1)
+    trans2 = -(R @ c2)
+    
+    k2Dot = K2 @ R
+    M1 = (k2Dot) @ np.linalg.inv(K1 @ R1)
+    M2 = (k2Dot) @ np.linalg.inv(K2 @ R2)
+    
+    return M1, M2, K2, K2, R, R, trans1, trans2
 
 
 """
@@ -141,8 +208,21 @@ Q3.2.2 Disparity Map
        [O] dispM, disparity map (H1xW1 matrix)
 """
 def get_disparity(im1, im2, max_disp, win_size):
-    # replace pass by your implementation
-    pass
+    frame = []
+    maxDisp = max_disp + 1
+    for i in range(maxDisp):
+        frame.append(0)
+    arr = np.ones((win_size, win_size))
+    for i in range(len(frame)):
+        shift = np.roll(im2, -i, axis=-1)
+        diff = im1 - shift
+        dist = diff ** 2
+        conv = scipy.signal.convolve2d(dist, arr, "same")
+        frame[i] = conv
+    frame = np.array(frame)
+    dispM = frame.argmin(axis=0)
+    dispM = np.where(dispM > 255, 255, dispM)
+    return dispM
 
 
 """
@@ -154,8 +234,21 @@ Q3.2.3 Depth Map
        [O] depthM, depth map (H1xW1 matrix)
 """
 def get_depth(dispM, K1, K2, R1, R2, t1, t2):
-    # replace pass by your implementation
-    pass
+    c1 = -np.linalg.inv(K1 @ R1) @ (K1 @ t1)
+    c2 = -np.linalg.inv(K2 @ R2) @ (K2 @ t2)
+    b = np.linalg.norm(c2 - c1)  # Baseline
+    
+    f = K1[0, 0]
+    depthM = np.zeros_like(dispM, dtype=np.float32)
+    for y in range(dispM.shape[0]):
+        for x in range(dispM.shape[1]):
+            disp = dispM[y, x]
+            if disp > 0:
+                depthM[y, x] = (b * f) / disp
+            else:
+                depthM[y, x] = 0
+
+    return depthM
 
 
 """

@@ -19,14 +19,8 @@ t1p, t2p = rectify['t1p'], rectify['t2p']
 
 # 2. Get disparity and depth maps
 
-max_disp, win_size = 20, 3
+max_disp, win_size = 20, 5
 
-# pad so can fully see rectified image
-padding = [(0, 0), (0, 200)]
-I1 = np.pad(I1, padding, mode='constant') 
-I2 = np.pad(I2, padding, mode='constant') 
-
-I1, I2, bb = hlp.warpStereo(I1, I2, M1, M2)
 dispM = sub.get_disparity(I1, I2, max_disp, win_size)
 depthM = sub.get_depth(dispM, K1p, K2p, R1p, R2p, t1p, t2p)
 
